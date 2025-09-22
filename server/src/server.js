@@ -3,13 +3,14 @@ import http from "http";
 import { Server } from "socket.io";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
+import path from "path";
 import cors from "cors";
 
 import authRoutes from "./routes/authRoutes.js";
 import chatRoutes from "./routes/chatRoutes.js";
 import messageRoutes from "./routes/messageRoutes.js";
 
-dotenv.config();
+dotenv.config({ path: path.resolve('../.env') }); // points to server/.env
 
 const app = express();
 const server = http.createServer(app);
