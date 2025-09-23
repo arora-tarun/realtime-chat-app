@@ -7,15 +7,14 @@ import path from "path";
 import cors from "cors";
 
 import authRoutes from "./routes/authRoutes.js";
-import chatRoutes from "./routes/chatRoutes.js";
-import messageRoutes from "./routes/messageRoutes.js";
+import userRoutes from "./routes/userRoutes.js";
 
-dotenv.config({ path: path.resolve('../.env') }); // points to server/.env
+dotenv.config({ path: path.resolve("../.env") }); // load .env
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
-  cors: { origin: "*" }
+  cors: { origin: "http://localhost:5173", methods: ["GET", "POST"] },
 });
 
 // Middleware
@@ -24,27 +23,39 @@ app.use(express.json());
 
 // Routes
 app.use("/api/auth", authRoutes);
-app.use("/api/chats", chatRoutes);
-app.use("/api/messages", messageRoutes);
+app.use("/api/users", userRoutes);
+
+// Online users tracking
+let onlineUsers = {};
 
 // Socket.io
 io.on("connection", (socket) => {
-  console.log("New user connected:", socket.id);
+  console.log("⚡ New user connected:", socket.id);
 
+  // Register user as online
+  socket.on("newUser", (email) => {
+    onlineUsers[email] = socket.id;
+    io.emit("onlineUsers", Object.keys(onlineUsers));
+  });
+
+  // Handle private messages
   socket.on("sendMessage", (data) => {
-    io.to(data.chatId).emit("receiveMessage", data);
+    const receiverSocket = onlineUsers[data.receiver];
+    if (receiverSocket) {
+      io.to(receiverSocket).emit("receiveMessage", data);
+    }
   });
 
-  socket.on("typing", (data) => {
-    socket.broadcast.to(data.chatId).emit("typing", data);
-  });
-
-  socket.on("joinChat", (chatId) => {
-    socket.join(chatId);
-  });
-
+  // Handle disconnect
   socket.on("disconnect", () => {
-    console.log("User disconnected:", socket.id);
+    for (let email in onlineUsers) {
+      if (onlineUsers[email] === socket.id) {
+        delete onlineUsers[email];
+        break;
+      }
+    }
+    io.emit("onlineUsers", Object.keys(onlineUsers));
+    console.log("❌ User disconnected:", socket.id);
   });
 });
 
