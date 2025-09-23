@@ -13,7 +13,8 @@ export default function Register() {
   const handleRegister = async (e) => {
     e.preventDefault();
     try {
-      const res = await API.post("/user/register", { username, email, password });
+      // ✅ corrected endpoint
+      const res = await API.post("/auth/register", { username, email, password });
       localStorage.setItem("user", JSON.stringify(res.data));
       navigate("/chat");
     } catch (err) {

@@ -1,9 +1,8 @@
-// client/src/pages/Login.jsx
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../services/api";
 
-export default function Login() {
+export default function Login({ setUser }) {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -12,8 +11,16 @@ export default function Login() {
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      const res = await API.post("/user/login", { email, password });
+      // ✅ corrected endpoint
+      const res = await API.post("/auth/login", { email, password });
+
+      // save user data in localStorage
       localStorage.setItem("user", JSON.stringify(res.data));
+
+      // ✅ update app state so routes re-render
+      setUser(res.data);
+
+      // redirect to chat
       navigate("/chat");
     } catch (err) {
       setError(err.response?.data?.message || "Login failed");
@@ -22,14 +29,12 @@ export default function Login() {
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row">
-      {/* Left side illustration / gradient */}
+      {/* Left side illustration */}
       <div className="hidden md:flex flex-1 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-700 items-center justify-center">
         <div className="text-center px-10">
-          <h1 className="text-5xl font-bold text-white mb-4">
-            Welcome Back!
-          </h1>
+          <h1 className="text-5xl font-bold text-white mb-4">Welcome Back!</h1>
           <p className="text-gray-300 text-lg">
-            Connect with your friends and colleagues in real-time.
+            Log in to continue chatting with your friends.
           </p>
         </div>
       </div>
@@ -81,7 +86,7 @@ export default function Login() {
           </form>
 
           <p className="mt-6 text-center text-gray-400">
-            Don't have an account?{" "}
+            Don’t have an account?{" "}
             <span
               onClick={() => navigate("/register")}
               className="text-white hover:underline cursor-pointer"

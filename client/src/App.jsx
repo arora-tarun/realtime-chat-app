@@ -1,11 +1,20 @@
+// client/src/App.jsx
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { useEffect, useState } from "react";
 import Login from "./pages/Login.jsx";
 import Register from "./pages/Register.jsx";
 import Chat from "./pages/Chat.jsx";
 
 function App() {
-  // Check if user is logged in
-  const user = JSON.parse(localStorage.getItem("user"));
+  const [user, setUser] = useState(null);
+
+  // Load user from localStorage when app starts
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
+  }, []);
 
   return (
     <Router>
@@ -16,14 +25,14 @@ function App() {
           element={user ? <Navigate to="/chat" /> : <Navigate to="/login" />}
         />
 
-        {/* Authentication routes */}
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
+        {/* Auth routes */}
+        <Route path="/login" element={<Login setUser={setUser} />} />
+        <Route path="/register" element={<Register setUser={setUser} />} />
 
-        {/* Chat route, protected */}
+        {/* Chat (protected route) */}
         <Route
           path="/chat"
-          element={user ? <Chat /> : <Navigate to="/login" />}
+          element={user ? <Chat user={user} /> : <Navigate to="/login" />}
         />
       </Routes>
     </Router>
